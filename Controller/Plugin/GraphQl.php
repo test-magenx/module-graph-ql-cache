@@ -9,13 +9,13 @@ namespace Magento\GraphQlCache\Controller\Plugin;
 
 use Magento\Framework\App\FrontControllerInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\Response\Http as ResponseHttp;
-use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\Registry;
-use Magento\GraphQl\Controller\HttpRequestProcessor;
 use Magento\GraphQlCache\Model\CacheableQuery;
-use Magento\GraphQlCache\Model\CacheId\CacheIdCalculator;
+use Magento\Framework\App\Response\Http as HttpResponse;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\PageCache\Model\Config;
+use Magento\GraphQl\Controller\HttpRequestProcessor;
+use Magento\Framework\App\Response\Http as ResponseHttp;
+use Magento\Framework\Registry;
 
 /**
  * Plugin for handling controller after controller tags and pre-controller validation.
@@ -33,7 +33,7 @@ class GraphQl
     private $config;
 
     /**
-     * @var ResponseHttp
+     * @var HttpResponse
      */
     private $response;
 
@@ -48,32 +48,24 @@ class GraphQl
     private $registry;
 
     /**
-     * @var CacheIdCalculator
-     */
-    private $cacheIdCalculator;
-
-    /**
      * @param CacheableQuery $cacheableQuery
      * @param Config $config
-     * @param ResponseHttp $response
+     * @param HttpResponse $response
      * @param HttpRequestProcessor $requestProcessor
      * @param Registry $registry
-     * @param CacheIdCalculator $cacheIdCalculator
      */
     public function __construct(
         CacheableQuery $cacheableQuery,
         Config $config,
-        ResponseHttp $response,
+        HttpResponse $response,
         HttpRequestProcessor $requestProcessor,
-        Registry $registry,
-        CacheIdCalculator $cacheIdCalculator
+        Registry $registry
     ) {
         $this->cacheableQuery = $cacheableQuery;
         $this->config = $config;
         $this->response = $response;
         $this->requestProcessor = $requestProcessor;
         $this->registry = $registry;
-        $this->cacheIdCalculator = $cacheIdCalculator;
     }
 
     /**
@@ -109,12 +101,6 @@ class GraphQl
             /** @see \Magento\Framework\App\Http::launch */
             /** @see \Magento\PageCache\Model\Controller\Result\BuiltinPlugin::afterRenderResult */
             $this->registry->register('use_page_cache_plugin', true, true);
-
-            $cacheId = $this->cacheIdCalculator->getCacheId();
-            if ($cacheId) {
-                $this->response->setHeader(CacheIdCalculator::CACHE_ID_HEADER, $cacheId, true);
-            }
-
             if ($this->cacheableQuery->shouldPopulateCacheHeadersWithTags()) {
                 $this->response->setPublicHeaders($this->config->getTtl());
                 $this->response->setHeader('X-Magento-Tags', implode(',', $this->cacheableQuery->getCacheTags()), true);
